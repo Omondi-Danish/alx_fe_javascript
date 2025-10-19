@@ -189,9 +189,10 @@ async function fetchQuotesFromServer() {
       remainingQuotes.push(...serverQuotes);
       localStorage.setItem("quotes", JSON.stringify(randomQuotes));
       populateCategories();
-      syncNotification.textContent = `✅ Synced ${serverQuotes.length} new quotes from server.`;
-      setTimeout(() => (syncNotification.textContent = ""), 5000);
     }
+
+    syncNotification.textContent = "Quotes synced with server!";
+    setTimeout(() => (syncNotification.textContent = ""), 5000);
   } catch (err) {
     console.error("Sync failed:", err);
     syncNotification.textContent = "⚠️ Server sync failed.";
