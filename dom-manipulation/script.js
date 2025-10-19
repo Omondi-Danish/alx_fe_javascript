@@ -1,5 +1,3 @@
-const newQuoteInput = document.getElementById("newQuoteText");
-const quoteCategory = document.getElementById("newQuoteCategory");
 const showQuoteButton = document.getElementById("newQuote");
 const display = document.getElementById("quoteDisplay");
 const categoryFilter = document.getElementById("categoryFilter");
@@ -51,6 +49,20 @@ let randomQuotes = JSON.parse(localStorage.getItem("quotes")) || [
   ...defaultQuotes,
 ];
 let remainingQuotes = [...randomQuotes];
+
+function createAddQuoteForm() {
+  const newQuoteInput = document.getElementById("newQuoteText");
+  const quoteCategory = document.getElementById("newQuoteCategory");
+
+  return {
+    getText: () => newQuoteInput.value.trim(),
+    getCategory: () => quoteCategory.value.trim(),
+    clear: () => {
+      newQuoteInput.value = "";
+      quoteCategory.value = "";
+    },
+  };
+}
 
 function populateCategories() {
   const categories = [
@@ -107,8 +119,9 @@ function showRandomQuote() {
 showQuoteButton.addEventListener("click", showRandomQuote);
 
 function addQuote() {
-  const text = newQuoteInput.value.trim();
-  const category = quoteCategory.value.trim();
+  const form = createAddQuoteForm();
+  const text = form.getText();
+  const category = form.getCategory();
 
   if (!text) {
     display.textContent = "Please enter a non-empty quote.";
@@ -119,8 +132,7 @@ function addQuote() {
   const duplicate = randomQuotes.some((q) => q.text.toLowerCase() === lower);
   if (duplicate) {
     display.textContent = "This quote already exists.";
-    newQuoteInput.value = "";
-    quoteCategory.value = "";
+    form.clear();
     return;
   }
 
@@ -130,8 +142,7 @@ function addQuote() {
   localStorage.setItem("quotes", JSON.stringify(randomQuotes));
   populateCategories();
   display.textContent = "Quote added and saved.";
-  newQuoteInput.value = "";
-  quoteCategory.value = "";
+  form.clear();
 }
 
 function exportQuotesToJson() {
@@ -177,37 +188,37 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
-function fetchQuotesFromServer() {
-  fetch(SERVER_URL)
-    .then((response) => response.json())
-    .then((serverData) => {
-      const serverQuotes = serverData
-        .map((item) => ({
-          text: String(item.title || "").trim(),
-          category: "Server",
-        }))
-        .filter(
-          (q) =>
-            q.text &&
-            !randomQuotes.some(
-              (r) => r.text.toLowerCase() === q.text.toLowerCase()
-            )
-        );
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverData = await response.json();
 
-      if (serverQuotes.length > 0) {
-        randomQuotes.push(...serverQuotes);
-        remainingQuotes.push(...serverQuotes);
-        localStorage.setItem("quotes", JSON.stringify(randomQuotes));
-        populateCategories();
-        syncNotification.textContent = `✅ Synced ${serverQuotes.length} new quotes from server.`;
-        setTimeout(() => (syncNotification.textContent = ""), 5000);
-      }
-    })
-    .catch((err) => {
-      console.error("Sync failed:", err);
-      syncNotification.textContent = "⚠️ Server sync failed.";
+    const serverQuotes = serverData
+      .map((item) => ({
+        text: String(item.title || "").trim(),
+        category: "Server",
+      }))
+      .filter(
+        (q) =>
+          q.text &&
+          !randomQuotes.some(
+            (r) => r.text.toLowerCase() === q.text.toLowerCase()
+          )
+      );
+
+    if (serverQuotes.length > 0) {
+      randomQuotes.push(...serverQuotes);
+      remainingQuotes.push(...serverQuotes);
+      localStorage.setItem("quotes", JSON.stringify(randomQuotes));
+      populateCategories();
+      syncNotification.textContent = `✅ Synced ${serverQuotes.length} new quotes from server.`;
       setTimeout(() => (syncNotification.textContent = ""), 5000);
-    });
+    }
+  } catch (err) {
+    console.error("Sync failed:", err);
+    syncNotification.textContent = "⚠️ Server sync failed.";
+    setTimeout(() => (syncNotification.textContent = ""), 5000);
+  }
 }
 
 window.onload = () => {
