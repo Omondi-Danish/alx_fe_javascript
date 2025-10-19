@@ -87,7 +87,7 @@ function filterQuotes() {
   display.textContent = `Quotes filtered by "${selected}". Click 'Show New Quote' to view.`;
 }
 
-showQuoteButton.addEventListener("click", () => {
+function showRandomQuote() {
   if (!display) return;
 
   if (remainingQuotes.length === 0) {
@@ -102,7 +102,9 @@ showQuoteButton.addEventListener("click", () => {
     quote.category || "Uncategorized"
   })</em>`;
   sessionStorage.setItem("lastViewedQuote", JSON.stringify(quote));
-});
+}
+
+showQuoteButton.addEventListener("click", showRandomQuote);
 
 function addQuote() {
   const text = newQuoteInput.value.trim();
@@ -175,7 +177,7 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
-function syncWithServer() {
+function fetchQuotesFromServer() {
   fetch(SERVER_URL)
     .then((response) => response.json())
     .then((serverData) => {
@@ -210,6 +212,6 @@ function syncWithServer() {
 
 window.onload = () => {
   populateCategories();
-  syncWithServer();
-  setInterval(syncWithServer, 60000); // Sync every 60 seconds
+  fetchQuotesFromServer();
+  setInterval(fetchQuotesFromServer, 60000); // Sync every 60 seconds
 };
